@@ -1,0 +1,27 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# OAuth credentials and generated state
+client_secret.json
+token.json
+data/
+output/
+logs/
+
+
+.env
+.env.*
+!.env.example
+*secret*.json
+token.json
+*.db
+*.sqlite*
+output/
+*.mp4
+*.mp3
+*.wav
+__pycache__/
+.venv/

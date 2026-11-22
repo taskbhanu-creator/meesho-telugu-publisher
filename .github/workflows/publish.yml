@@ -1,0 +1,105 @@
+name: Meesho content pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Generate content without publishing it
+        required: true
+        type: boolean
+        default: true
+  schedule:
+    - cron: "23 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meesho-content-pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+      META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+      META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+      META_GRAPH_API_VERSION: ${{ vars.META_GRAPH_API_VERSION || 'v27.0' }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
+      R2_PUBLIC_BASE_URL: ${{ vars.R2_PUBLIC_BASE_URL }}
+      R2_OBJECT_PREFIX: ${{ vars.R2_OBJECT_PREFIX || 'videos' }}
+      R2_STATE_BUCKET_NAME: ${{ vars.R2_STATE_BUCKET_NAME }}
+      R2_STATE_OBJECT_KEY: ${{ vars.R2_STATE_OBJECT_KEY || 'pipeline.db' }}
+      R2_STATE_ACCESS_KEY_ID: ${{ secrets.R2_STATE_ACCESS_KEY_ID }}
+      R2_STATE_SECRET_ACCESS_KEY: ${{ secrets.R2_STATE_SECRET_ACCESS_KEY }}
+      ADMIN_API_TOKEN: ${{ secrets.ADMIN_API_TOKEN }}
+      WEBHOOK_PUBLIC_URL: ${{ vars.WEBHOOK_PUBLIC_URL }}
+      MEESHO_AFFILIATE_ID: ${{ secrets.MEESHO_AFFILIATE_ID }}
+      MEESHO_AFFILIATE_BASE_URL: ${{ vars.MEESHO_AFFILIATE_BASE_URL || 'https://meesho.com' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Run automation regression tests
+        run: >
+          python -m pytest -q
+          tests/test_runtime_config.py
+          tests/test_database_scheduler_runtime.py
+          tests/test_video_pipeline_runtime.py
+          tests/test_r2_storage.py
+          tests/test_state_storage.py
+          tests/test_instagram_private_replies.py
+
+      - name: Restore SQLite state
+        id: restore
+        run: python -m src.main restore-state
+
+      - name: Extract current products
+        run: python -m src.main extract
+
+      - name: Run pipeline without publishing
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: python -m src.main pipeline --once --dry-run
+
+      - name: Generate and publish content
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
+        run: python -m src.main pipeline --once
+
+      - name: Persist SQLite state
+        id: persist
+        if: always() && steps.restore.outcome == 'success'
+        run: python -m src.main persist-state
+
+      - name: Reload webhook service state
+        if: always() && steps.persist.outcome == 'success' && vars.WEBHOOK_PUBLIC_URL != ''
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "${WEBHOOK_PUBLIC_URL%/}/admin/state/reload" \
+            -H "X-Admin-Token: ${ADMIN_API_TOKEN}"
