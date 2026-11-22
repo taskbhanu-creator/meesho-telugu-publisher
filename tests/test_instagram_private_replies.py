@@ -93,6 +93,7 @@ def test_instagram_webhook_accepts_valid_signature(monkeypatch):
     payload = b'{"object":"instagram","entry":[]}'
     signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
     monkeypatch.setattr(server_webhook.settings, "meta_app_secret", secret)
+    monkeypatch.setattr(server_webhook.settings, "r2_state_bucket_name", "")
 
     response = TestClient(server_webhook.app).post(
         "/webhook/instagram",
