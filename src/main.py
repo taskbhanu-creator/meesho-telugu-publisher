@@ -15,7 +15,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from src.config import settings
 from src.database import init_db, get_pipeline_stats, get_daily_quota, DailyQuota
-from src.extractor import extract_products, extract_category
+from src.extractor import ProductExtractionError, extract_products, extract_category
 from src.script_tts import generate_script_and_tts
 from src.video_builder import build_video
 from src.youtube_uploader import upload_to_youtube, check_youtube_quota
@@ -159,7 +159,12 @@ def extract(
             console.print("[cyan]Extracting all categories...[/cyan]")
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
                 task = progress.add_task("Scraping all categories...", total=None)
-                results = await extract_products(headless=headless)
+                try:
+                    results = await extract_products(headless=headless)
+                except ProductExtractionError as error:
+                    progress.update(task, completed=True)
+                    console.print(f"[red]Product extraction failed:[/red] {error}")
+                    raise typer.Exit(code=1) from error
                 progress.update(task, completed=True)
 
             total = sum(len(p) for p in results.values())

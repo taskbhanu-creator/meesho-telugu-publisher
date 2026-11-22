@@ -1,9 +1,15 @@
 """
 Tests for Meesho extractor module.
 """
+import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.extractor import MeeshoExtractor, ExtractedProduct
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from src.extractor import (
+    ExtractedProduct,
+    MeeshoExtractor,
+    ProductExtractionError,
+)
 from src.config import settings
 
 
@@ -150,6 +156,34 @@ class TestMeeshoExtractor:
         assert extractor._get_default_sizes("sarees") == ["Free Size"]
         assert extractor._get_default_sizes("handbags") == ["One Size"]
         assert extractor._get_default_sizes("unknown") == ["S", "M", "L", "XL"]
+
+    def test_wait_for_products_reports_empty_or_blocked_page(self, extractor):
+        extractor.page = MagicMock()
+        extractor.page.wait_for_selector = AsyncMock(
+            side_effect=PlaywrightTimeoutError("selector timed out")
+        )
+        extractor.page.wait_for_load_state = AsyncMock()
+        extractor.page.query_selector_all = AsyncMock(return_value=[])
+        extractor.page.title = AsyncMock(return_value="Access denied")
+        extractor.page.url = "https://www.meesho.com/women-kurtis/pl/2z3"
+
+        with pytest.raises(RuntimeError, match="blocked or the product-card selectors"):
+            asyncio.run(extractor._wait_for_products())
+
+    def test_scrape_all_categories_fails_when_every_category_is_empty(
+        self, extractor
+    ):
+        extractor.scrape_category = AsyncMock(return_value=[])
+
+        with pytest.raises(ProductExtractionError, match="No products were extracted"):
+            asyncio.run(extractor.scrape_all_categories())
+
+    def test_scrape_category_records_http_error(self, extractor):
+        extractor.page = MagicMock()
+        extractor.page.goto = AsyncMock(return_value=MagicMock(status=403))
+
+        assert asyncio.run(extractor.scrape_category("kurtis")) == []
+        assert "Meesho returned HTTP 403" in extractor.errors[0]
 
 
 class TestCategoryURLs:

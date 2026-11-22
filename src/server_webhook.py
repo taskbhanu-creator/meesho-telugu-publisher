@@ -3,6 +3,7 @@ FastAPI server for media hosting and Instagram webhook handling.
 Serves generated videos via HTTPS (via Cloudflare Tunnel) and handles webhooks.
 """
 import asyncio
+from contextlib import asynccontextmanager
 import hmac
 import hashlib
 import json
@@ -51,10 +52,20 @@ class MediaFileInfo(BaseModel):
 # FastAPI App
 # =============================================================================
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize media serving when the application starts."""
+    media_dir = get_media_dir()
+    media_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/media", StaticFiles(directory=str(media_dir)), name="media")
+    yield
+
+
 app = FastAPI(
     title="Meesho Fashion Channel API",
     description="Media hosting and webhook handler for Telugu fashion channel",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Lazy initialization - will be set on first use
@@ -220,16 +231,6 @@ async def health():
         "media_dir_exists": media_dir.exists(),
         "timestamp": datetime.now().isoformat()
     }
-
-
-# Mount media directory for direct file serving (done at startup)
-@app.on_event("startup")
-async def startup_event():
-    """Initialize media directory on startup."""
-    media_dir = get_media_dir()
-    media_dir.mkdir(parents=True, exist_ok=True)
-    # Mount static files
-    app.mount("/media", StaticFiles(directory=str(media_dir)), name="media")
 
 
 @app.get("/media/{filename}")

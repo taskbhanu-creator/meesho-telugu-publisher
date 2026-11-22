@@ -13,12 +13,22 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from urllib.parse import urljoin, urlparse
 
-from playwright.async_api import async_playwright, Browser, Page, ElementHandle
+from playwright.async_api import (
+    async_playwright,
+    Browser,
+    Page,
+    ElementHandle,
+    TimeoutError as PlaywrightTimeoutError,
+)
 from src.config import settings
 from src.database import Product, save_product, get_product_count
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+
+class ProductExtractionError(RuntimeError):
+    """Raised when the product catalog cannot be extracted."""
 
 
 # =============================================================================
@@ -138,7 +148,13 @@ class MeeshoExtractor:
         page_num = 1
 
         try:
-            await self.page.goto(full_url, wait_until="networkidle", timeout=settings.meesho_request_timeout_ms)
+            response = await self.page.goto(
+                full_url,
+                wait_until="networkidle",
+                timeout=settings.meesho_request_timeout_ms
+            )
+            if response and response.status >= 400:
+                raise RuntimeError(f"Meesho returned HTTP {response.status} for {full_url}")
             await self._wait_for_products()
 
             while len(products) < max_products:
@@ -181,6 +197,11 @@ class MeeshoExtractor:
         results = {}
         for category in settings.meesho_categories:
             results[category] = await self.scrape_category(category)
+        if not any(results.values()):
+            details = "; ".join(self.errors) or "No valid products matched the current page selectors."
+            raise ProductExtractionError(
+                f"No products were extracted from any Meesho category. {details}"
+            )
         return results
 
     async def _wait_for_products(self):
@@ -190,9 +211,16 @@ class MeeshoExtractor:
                 self.SELECTORS["product_card"],
                 timeout=10000
             )
-        except Exception:
-            # Try alternative wait
+        except PlaywrightTimeoutError:
             await self.page.wait_for_load_state("networkidle")
+            cards = await self.page.query_selector_all(self.SELECTORS["product_card"])
+            if not cards:
+                title = await self.page.title()
+                raise RuntimeError(
+                    "No product cards appeared after the page finished loading "
+                    f"(url={self.page.url!r}, title={title!r}); the page may be "
+                    "blocked or the product-card selectors may be outdated."
+                )
 
     async def _extract_products_from_page(self, category: str) -> List[Product]:
         """Extract product data from current page."""
