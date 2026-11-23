@@ -1,7 +1,7 @@
 # Core dependencies
 playwright>=1.52.0
 google-genai>=2.25.0,<4.0
-Pillow==10.2.0
+Pillow>=12.0.0,<14.0.0
 requests==2.31.0
 boto3>=1.35,<2.0
 
@@ -16,7 +16,7 @@ rich==13.7.1
 structlog==24.1.0
 
 # Google OAuth & YouTube API
-google-auth==2.25.2
+google-auth>=2.56.0,<3.0.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.117.0
 
@@ -27,7 +27,7 @@ facebook-business==20.0.0
 apscheduler==3.10.4
 
 # Configuration
-pydantic==2.5.3
+pydantic>=2.12.5,<3.0.0
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
 
