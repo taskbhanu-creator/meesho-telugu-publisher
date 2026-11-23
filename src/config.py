@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Google Gemini API
     # -------------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google Gemini API key from AI Studio")
-    gemini_model: str = Field(default="gemini-2.5-flash", description="Gemini model to use")
+    gemini_model: str = Field(default="gemini-3.8-flash", description="Gemini model to use")
 
     # -------------------------------------------------------------------------
     # Google OAuth / YouTube

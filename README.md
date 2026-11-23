@@ -195,6 +195,8 @@ Add these non-secret values under **Actions variables**:
 `R2_PUBLIC_BASE_URL`, `R2_OBJECT_PREFIX`, `R2_STATE_BUCKET_NAME`,
 `R2_STATE_OBJECT_KEY`, `MEESHO_AFFILIATE_BASE_URL`, and `WEBHOOK_PUBLIC_URL`
 (only if deploying the webhook service).
+Set `GEMINI_MODEL` to `gemini-3.8-flash`; an explicitly configured Actions
+variable overrides the workflow default.
 
 The workflow restores SQLite state from the private R2 bucket, imports
 `data/product_catalog.json`, then saves a consistent snapshot after the run.
