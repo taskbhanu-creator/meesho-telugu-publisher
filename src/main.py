@@ -1,6 +1,6 @@
 """
 Main CLI entry point for Meesho Fashion Channel automation.
-Commands: init, extract, generate, upload-youtube, upload-instagram, pipeline, scheduler, server, quota, stats
+Commands: init, extract, import-catalog, generate, upload-youtube, upload-instagram, pipeline, scheduler, server, quota, stats
 """
 import asyncio
 import sys
@@ -16,6 +16,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from src.config import settings
 from src.database import init_db, get_pipeline_stats, get_daily_quota, DailyQuota
 from src.extractor import ProductExtractionError, extract_products, extract_category
+from src.product_catalog import ProductCatalogError, import_product_catalog
 from src.script_tts import generate_script_and_tts
 from src.video_builder import build_video
 from src.youtube_uploader import upload_to_youtube, check_youtube_quota
@@ -80,6 +81,21 @@ async def ensure_directories():
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
+
+
+@app.command("import-catalog")
+def import_catalog(
+    catalog_path: Path = typer.Argument(Path("data/product_catalog.json"), help="Weekly product catalog JSON")
+):
+    """Import the checked-in weekly product catalog without contacting Meesho."""
+    print_banner()
+    init_db()
+    try:
+        count = import_product_catalog(catalog_path)
+    except ProductCatalogError as error:
+        console.print(f"[red]Product catalog import failed:[/red] {error}")
+        raise typer.Exit(code=1) from error
+    console.print(f"[green]✓[/green] Imported {count} products from {catalog_path}")
 
 
 def check_environment(required: Optional[list[str]] = None):
@@ -355,7 +371,7 @@ def pipeline(
     dry_run: bool = typer.Option(False, "--dry-run", help="Run without actual uploads"),
     once: bool = typer.Option(False, "--once", help="Run once and exit")
 ):
-    """Run the full pipeline (extract -> generate -> build -> upload)."""
+    """Run the pipeline for available products (generate -> build -> upload)."""
     print_banner()
 
     required_settings = ["GEMINI_API_KEY"]

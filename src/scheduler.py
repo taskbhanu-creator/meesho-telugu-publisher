@@ -156,7 +156,7 @@ class PipelineScheduler:
         logger.info(f"Scheduled jobs: {list(self.jobs.keys())}")
 
     async def run_pipeline(self) -> PipelineResult:
-        """Run the complete pipeline: extract -> generate -> build -> upload."""
+        """Run the pipeline for available products: generate -> build -> upload."""
         run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         started_at = datetime.now()
 

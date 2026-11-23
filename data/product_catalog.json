@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-23T10:11:10.062745Z",
+  "expires_at": "2026-11-30T10:11:10.062745Z",
+  "product_count": 21,
+  "products": [
+    {
+      "meesho_product_id": "5ihfj3",
+      "title": "Women Georgette Trendy Drishya Kurtis",
+      "category": "kurtis",
+      "price": 311,
+      "original_price": 311,
+      "discount_percent": 0,
+      "rating": 4.1,
+      "review_count": 53644,
+      "image_urls": [
+        "https://images.meesho.com/images/products/333377247/ryeix_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/apaari-fab-womens-embroidered-georgette-straight-kurti/p/5ihfj3?aff_id=56145882",
+      "product_code": "KUR-5IHFJ3",
+      "fabric": "Georgette",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062086Z"
+    },
+    {
+      "meesho_product_id": "6hnqz1",
+      "title": "Women Rayon Myra Petite Kurtis",
+      "category": "kurtis",
+      "price": 237,
+      "original_price": 237,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 107386,
+      "image_urls": [
+        "https://images.meesho.com/images/products/392458573/97zwk_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/taj-kurti-for-women/p/6hnqz1?aff_id=56145882",
+      "product_code": "KUR-6HNQZ1",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062159Z"
+    },
+    {
+      "meesho_product_id": "5bzswq",
+      "title": "Women Rayon Alisha Refined Kurtis",
+      "category": "kurtis",
+      "price": 305,
+      "original_price": 305,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 30922,
+      "image_urls": [
+        "https://images.meesho.com/images/products/322477082/ukmrm_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/women-janki-anarkali-pink-jaipur-kurti/p/5bzswq?aff_id=56145882",
+      "product_code": "KUR-5BZSWQ",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062204Z"
+    },
+    {
+      "meesho_product_id": "230zgp",
+      "title": "Women Rayon Banita Refined Kurtis",
+      "category": "kurtis",
+      "price": 251,
+      "original_price": 251,
+      "discount_percent": 0,
+      "rating": 4.1,
+      "review_count": 27090,
+      "image_urls": [
+        "https://images.meesho.com/images/products/126017161/1keof_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/women-rayon-anarkali-kurti/p/230zgp?aff_id=56145882",
+      "product_code": "KUR-230ZGP",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062238Z"
+    },
+    {
+      "meesho_product_id": "77frcm",
+      "title": "Women Satin Charvi Fashionable Kurtis",
+      "category": "kurtis",
+      "price": 201,
+      "original_price": 201,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 74111,
+      "image_urls": [
+        "https://images.meesho.com/images/products/435755830/dbyvq_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/kurtis-for-women-2024-collection/p/77frcm?aff_id=56145882",
+      "product_code": "KUR-77FRCM",
+      "fabric": "Satin",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062270Z"
+    },
+    {
+      "meesho_product_id": "7tw01f",
+      "title": "Banita Drishya Kurtis",
+      "category": "kurtis",
+      "price": 227,
+      "original_price": 227,
+      "discount_percent": 0,
+      "rating": 4.4,
+      "review_count": 24029,
+      "image_urls": [
+        "https://images.meesho.com/images/products/473465139/czpvm_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/straight-embroidered-kurta-for-women-and-girls/p/7tw01f?aff_id=56145882",
+      "product_code": "KUR-7TW01F",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062299Z"
+    },
+    {
+      "meesho_product_id": "89mqcb",
+      "title": "Women Cotton Cambric Alisha Drishya Kurtis",
+      "category": "kurtis",
+      "price": 296,
+      "original_price": 296,
+      "discount_percent": 0,
+      "rating": 4.3,
+      "review_count": 28483,
+      "image_urls": [
+        "https://images.meesho.com/images/products/499906523/ldgd8_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/traditional-cotton-ajrakh-printed-kurti-for-women/p/89mqcb?aff_id=56145882",
+      "product_code": "KUR-89MQCB",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062328Z"
+    },
+    {
+      "meesho_product_id": "4z49pf",
+      "title": "Women Rayon Aagam Pretty Kurtis",
+      "category": "kurtis",
+      "price": 389,
+      "original_price": 389,
+      "discount_percent": 0,
+      "rating": 4.1,
+      "review_count": 73147,
+      "image_urls": [
+        "https://images.meesho.com/images/products/300850467/sdkfw_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/anarakali-kurti-and-dupatta-pink/p/4z49pf?aff_id=56145882",
+      "product_code": "KUR-4Z49PF",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062356Z"
+    },
+    {
+      "meesho_product_id": "6lsw0l",
+      "title": "Women Cotton Jivika Alluring Kurtis",
+      "category": "kurtis",
+      "price": 218,
+      "original_price": 241,
+      "discount_percent": 10,
+      "rating": 4.1,
+      "review_count": 46128,
+      "image_urls": [
+        "https://images.meesho.com/images/products/399416853/3rmom_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/stylish-comfortable-kurtis-for-every-occasion-trendy-elegant-and-versatile-cotton-embroidered-designs-for-women/p/6lsw0l?aff_id=56145882",
+      "product_code": "KUR-6LSW0L",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062384Z"
+    },
+    {
+      "meesho_product_id": "379r74",
+      "title": "Women Rayon Trendy Refined Kurtis",
+      "category": "kurtis",
+      "price": 258,
+      "original_price": 258,
+      "discount_percent": 0,
+      "rating": 3.9,
+      "review_count": 79913,
+      "image_urls": [
+        "https://images.meesho.com/images/products/193610992/rgodi_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/aagam-sensational-kurtis/p/379r74?aff_id=56145882",
+      "product_code": "KUR-379R74",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062411Z"
+    },
+    {
+      "meesho_product_id": "21ryil",
+      "title": "Women Georgette Myra Superior Kurtis",
+      "category": "kurtis",
+      "price": 273,
+      "original_price": 273,
+      "discount_percent": 0,
+      "rating": 3.9,
+      "review_count": 41815,
+      "image_urls": [
+        "https://images.meesho.com/images/products/123916413/qki3h_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/sky-blue-colour-printed-dress/p/21ryil?aff_id=56145882",
+      "product_code": "KUR-21RYIL",
+      "fabric": "Georgette",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062438Z"
+    },
+    {
+      "meesho_product_id": "531sbx",
+      "title": "Women Rayon Alisha Fabulous Kurtis",
+      "category": "kurtis",
+      "price": 288,
+      "original_price": 288,
+      "discount_percent": 0,
+      "rating": 4.3,
+      "review_count": 31915,
+      "image_urls": [
+        "https://images.meesho.com/images/products/307453101/ge7bx_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/womens-rayon-gold-printed-straight-kurti/p/531sbx?aff_id=56145882",
+      "product_code": "KUR-531SBX",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062465Z"
+    },
+    {
+      "meesho_product_id": "82wwom",
+      "title": "Women Rayon Charvi Voguish Kurtis",
+      "category": "kurtis",
+      "price": 264,
+      "original_price": 264,
+      "discount_percent": 0,
+      "rating": 3.9,
+      "review_count": 27375,
+      "image_urls": [
+        "https://images.meesho.com/images/products/488623990/wez9e_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/new-woman-anarkalikurtis-new-trending-anarkali-kurtis/p/82wwom?aff_id=56145882",
+      "product_code": "KUR-82WWOM",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062491Z"
+    },
+    {
+      "meesho_product_id": "1xblbq",
+      "title": "Chitrarekha Ensemble Kurtis",
+      "category": "kurtis",
+      "price": 273,
+      "original_price": 273,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 13667,
+      "image_urls": [
+        "https://images.meesho.com/images/products/116434358/vvp2z_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/aline-kurta-dress-designed-for-both-comfort-and-style-crafted-from-lightweight-breathable-fabric-this-dress-features-intricate-detailing-and-a-flattering-silhouette-that-effortlessly-transitions-from-day-to-night-the-vibrant-orange-hue-adds-a-pop-of-color-to-your-ensemble/p/1xblbq?aff_id=56145882",
+      "product_code": "KUR-1XBLBQ",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062520Z"
+    },
+    {
+      "meesho_product_id": "bsuh9",
+      "title": "Adrika Superior Kurtis",
+      "category": "kurtis",
+      "price": 264,
+      "original_price": 264,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 19377,
+      "image_urls": [
+        "https://images.meesho.com/images/products/19821645/a3f71_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/jivika-sensational-kurtis/p/bsuh9?aff_id=56145882",
+      "product_code": "KUR-BSUH9",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062548Z"
+    },
+    {
+      "meesho_product_id": "5jtmad",
+      "title": "Women Rayon Chitrarekha Petite Kurtis",
+      "category": "kurtis",
+      "price": 263,
+      "original_price": 263,
+      "discount_percent": 0,
+      "rating": 3.8,
+      "review_count": 46503,
+      "image_urls": [
+        "https://images.meesho.com/images/products/335625493/nfpzn_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/anarkali-high-demand-trendy-rayon-gown-kurtis/p/5jtmad?aff_id=56145882",
+      "product_code": "KUR-5JTMAD",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062574Z"
+    },
+    {
+      "meesho_product_id": "90jnij",
+      "title": "Women Cotton Abhisarika Voguish Kurtis",
+      "category": "kurtis",
+      "price": 221,
+      "original_price": 221,
+      "discount_percent": 0,
+      "rating": 4.1,
+      "review_count": 16588,
+      "image_urls": [
+        "https://images.meesho.com/images/products/545112523/5y9wg_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/trendy-fasionable-yellow-cotton-embroidered-kurti/p/90jnij?aff_id=56145882",
+      "product_code": "KUR-90JNIJ",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062599Z"
+    },
+    {
+      "meesho_product_id": "7k91l6",
+      "title": "Women Rayon Adrika Fabulous Kurtis",
+      "category": "kurtis",
+      "price": 291,
+      "original_price": 291,
+      "discount_percent": 0,
+      "rating": 4.2,
+      "review_count": 17254,
+      "image_urls": [
+        "https://images.meesho.com/images/products/457277514/czk2w_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/singal-kurta/p/7k91l6?aff_id=56145882",
+      "product_code": "KUR-7K91L6",
+      "fabric": "Rayon",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062623Z"
+    },
+    {
+      "meesho_product_id": "87efwp",
+      "title": "Women Crepe Polyster/Crepe fabric-Aagyeyi Refined Kurtis",
+      "category": "kurtis",
+      "price": 198,
+      "original_price": 198,
+      "discount_percent": 0,
+      "rating": 3.9,
+      "review_count": 19487,
+      "image_urls": [
+        "https://images.meesho.com/images/products/496160521/9b3np_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/polystercrepe-fabric-womens-kurtis-pack-of-2/p/87efwp?aff_id=56145882",
+      "product_code": "KUR-87EFWP",
+      "fabric": "Crepe",
+      "color": "Multicolor",
+      "size_options": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062651Z"
+    },
+    {
+      "meesho_product_id": "89kp5c",
+      "title": "Jivika Superior Sarees",
+      "category": "sarees",
+      "price": 303,
+      "original_price": 303,
+      "discount_percent": 0,
+      "rating": 3.8,
+      "review_count": 39818,
+      "image_urls": [
+        "https://images.meesho.com/images/products/499811664/eanm1_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/woven-banarasi-jacquard-saree/p/89kp5c?aff_id=56145882",
+      "product_code": "SAR-89KP5C",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "Free Size"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062677Z"
+    },
+    {
+      "meesho_product_id": "87vu6n",
+      "title": "Charvi Pretty Sarees",
+      "category": "sarees",
+      "price": 293,
+      "original_price": 293,
+      "discount_percent": 0,
+      "rating": 4.0,
+      "review_count": 20674,
+      "image_urls": [
+        "https://images.meesho.com/images/products/496972175/pvx9e_512.webp?width=360"
+      ],
+      "affiliate_url": "https://www.meesho.com/saree-georgette-saree-saree-new-collection-redy-to-wear-saree-saree-silk-saree-partywear-saree/p/87vu6n?aff_id=56145882",
+      "product_code": "SAR-87VU6N",
+      "fabric": "Cotton",
+      "color": "Multicolor",
+      "size_options": [
+        "Free Size"
+      ],
+      "in_stock": true,
+      "scraped_at": "2026-11-23T10:11:10.062704Z"
+    }
+  ]
+}

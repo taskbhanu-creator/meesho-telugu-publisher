@@ -4,7 +4,7 @@
 
 ## 🚀 Features
 
-- **Meesho Scraper**: Playwright-based extraction of live product titles, prices, ratings, reviews, images, and links across Kurtis, Sarees, Ethnic Wear, Western Wear, and Handbags. It rediscovers category URLs from Meesho navigation when saved URLs become stale.
+- **Meesho Product Catalog**: Refresh product details locally with Playwright, then import a validated weekly JSON catalog in GitHub Actions instead of scraping Meesho from the runner.
 - **Strict Innerwear Exclusion**: Automatically filters out innerwear/lingerie/nightwear using comprehensive keyword list
 - **Telugu Script Generation**: Google Gemini API Free Tier generates 25-28s scripts with hook, fabric/price details, dual CTA
 - **Telugu TTS**: Edge TTS (`te-IN-ShrutiNeural`/`te-IN-MohanNeural`) - completely free, no API key
@@ -24,6 +24,8 @@ meesho-telugu-fashion/
 │   ├── config.py              # Configuration (pydantic-settings)
 │   ├── database.py            # SQLite database layer
 │   ├── extractor.py           # Meesho Playwright scraper
+│   ├── product_catalog.py     # Validated weekly catalog import/export
+│   ├── update_product_catalog.py # Local weekly catalog refresh command
 │   ├── script_tts.py          # Gemini script + Edge TTS
 │   ├── video_builder.py       # Pillow + FFmpeg video creation
 │   ├── youtube_uploader.py    # YouTube Data API v3
@@ -194,8 +196,32 @@ Add these non-secret values under **Actions variables**:
 `R2_STATE_OBJECT_KEY`, `MEESHO_AFFILIATE_BASE_URL`, and `WEBHOOK_PUBLIC_URL`
 (only if deploying the webhook service).
 
-The workflow restores SQLite state from the private R2 bucket before scraping,
-then saves a consistent snapshot after the run. Do not enable scheduled
+The workflow restores SQLite state from the private R2 bucket, imports
+`data/product_catalog.json`, then saves a consistent snapshot after the run.
+GitHub-hosted runners may receive HTTP 403 from Meesho; the workflow does not
+scrape Meesho and requires the catalog file to be committed to the repository.
+Refresh it locally once a week from a network where Meesho is accessible:
+
+```bash
+python -m src.update_product_catalog --max-per-category 20
+```
+
+The command writes `data/product_catalog.json` only if it can extract at least
+21 usable, unique, in-stock products with product images. It validates the
+catalog structure, writes atomically, and sets a seven-day expiry. If extraction
+fails or returns too few products, the previous JSON stays untouched. Review
+and upload the generated file before the expiry; Actions rejects missing,
+invalid, or expired catalogs. The workflow retains published/used product state
+from SQLite when refreshing product details.
+
+The standard standalone live extraction command remains available for local
+diagnostics:
+
+```bash
+python -m src.main extract
+```
+
+Do not enable scheduled
 publishing until you've verified each OAuth token and public video URL with a
 manual dry-run and one explicitly approved live run.
 
@@ -243,6 +269,11 @@ python -m src.main init
 ### Run Extraction Only
 ```bash
 python -m src.main extract
+```
+
+### Refresh Weekly Product Catalog
+```bash
+python -m src.update_product_catalog --max-per-category 20
 ```
 
 ### Generate Video for Next Product

@@ -79,13 +79,14 @@ jobs:
           tests/test_r2_storage.py
           tests/test_state_storage.py
           tests/test_instagram_private_replies.py
+          tests/test_product_catalog.py
 
       - name: Restore SQLite state
         id: restore
         run: python -m src.main restore-state
 
-      - name: Extract current products
-        run: python -m src.main extract
+      - name: Import weekly product catalog
+        run: python -m src.main import-catalog data/product_catalog.json
 
       - name: Run pipeline without publishing
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run
