@@ -7,7 +7,7 @@
 - **Meesho Product Catalog**: Refresh product details locally with Playwright, then import a validated weekly JSON catalog in GitHub Actions instead of scraping Meesho from the runner.
 - **Strict Innerwear Exclusion**: Automatically filters out innerwear/lingerie/nightwear using comprehensive keyword list
 - **Telugu Script Generation**: Google Gemini API Free Tier generates 25-28s scripts with hook, fabric/price details, dual CTA
-- **Telugu TTS**: Edge TTS (`te-IN-ShrutiNeural`/`te-IN-MohanNeural`) - completely free, no API key
+- **Telugu TTS**: Gemini 3.8 Flash-Lite TTS (`Kore`/`Puck`) using the configured Gemini API key; free tier has usage limits
 - **Video Builder**: Downloads product images, then streams 1080x1920 Telugu-subtitled Ken Burns frames through FFmpeg with optional BGM ducking
 - **YouTube Shorts Upload**: OAuth 2.0 with quota management, affiliate links in description
 - **Instagram Reels Upload**: Meta Graph API with public video URL (Cloudflare Tunnel), comment-to-DM webhook
@@ -26,7 +26,7 @@ meesho-telugu-fashion/
 │   ├── extractor.py           # Meesho Playwright scraper
 │   ├── product_catalog.py     # Validated weekly catalog import/export
 │   ├── update_product_catalog.py # Local weekly catalog refresh command
-│   ├── script_tts.py          # Gemini script + Edge TTS
+│   ├── script_tts.py          # Gemini script generation + Gemini TTS
 │   ├── video_builder.py       # Pillow + FFmpeg video creation
 │   ├── youtube_uploader.py    # YouTube Data API v3
 │   ├── instagram_uploader.py  # Meta Graph API
@@ -191,12 +191,16 @@ Actions**.
 | `ADMIN_API_TOKEN` | Long random token protecting webhook-service admin endpoints |
 
 Add these non-secret values under **Actions variables**:
-`GEMINI_MODEL`, `META_GRAPH_API_VERSION`, `R2_BUCKET_NAME`,
+`GEMINI_MODEL`, `GEMINI_TTS_MODEL`, `META_GRAPH_API_VERSION`, `R2_BUCKET_NAME`,
 `R2_PUBLIC_BASE_URL`, `R2_OBJECT_PREFIX`, `R2_STATE_BUCKET_NAME`,
 `R2_STATE_OBJECT_KEY`, `MEESHO_AFFILIATE_BASE_URL`, and `WEBHOOK_PUBLIC_URL`
 (only if deploying the webhook service).
 Set `GEMINI_MODEL` to `gemini-3.8-flash`; an explicitly configured Actions
 variable overrides the workflow default.
+The workflow defaults `GEMINI_TTS_MODEL` to `gemini-3.8-flash-lite-tts`;
+you can override it with an Actions variable.
+Gemini TTS is subject to Google AI Studio rate limits; usage beyond any free
+allowance may be billable if billing is enabled on the API account.
 
 The workflow restores SQLite state from the private R2 bucket, imports
 `data/product_catalog.json`, then saves a consistent snapshot after the run.
@@ -349,7 +353,7 @@ pytest tests/ --cov=src --cov-report=html
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  Extractor  │────▶│ Script + TTS│────▶│Video Builder│
-│ (Playwright)│     │ (Gemini+Edge)│     │(Pillow+FFmpeg)│
+│ (Playwright)│     │ (Gemini TTS)│     │(Pillow+FFmpeg)│
 └─────────────┘     └─────────────┘     └──────┬──────┘
                                                │
                     ┌─────────────┐             │

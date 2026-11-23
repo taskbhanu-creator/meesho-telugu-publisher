@@ -1,11 +1,20 @@
 """
 Tests for script generation and TTS module.
 """
+import asyncio
+from types import SimpleNamespace
+
+import base64
+import asyncio
+from types import SimpleNamespace
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.script_tts import ScriptGenerator, TTSEngine, ScriptResult
 from src.database import Product
 from datetime import datetime
+from google.genai.errors import APIError
+from google.genai.errors import APIError
 
 
 @pytest.fixture
@@ -97,13 +106,65 @@ class TestScriptGenerator:
         assert "కుర్తీ" in script or "కొట్టൺ" in script.lower()
         assert "₹299" in script or "299" in script
         assert "50%" in script or "50" in script
-        assert "Red" in script or "రెడ్" in script
+        assert "Red" in script or "ఎరుపు" in script
         assert "KUR-TEST12" in script
 
         # Should contain dual CTA
         assert "YouTube description లో లింక్ ఉంది" in script
         assert "Instagram మీద Comment LINK" in script
         assert "DM చేయండి" in script
+        cleaned_script = generator._clean_script(script)
+        assert 65 <= generator._count_telugu_words(cleaned_script) <= 80
+
+    @pytest.mark.asyncio
+    async def test_generate_retries_temporary_gemini_error(self, sample_product, monkeypatch):
+        generator = ScriptGenerator.__new__(ScriptGenerator)
+        generate_content = MagicMock(
+            side_effect=[
+                APIError(
+                    503,
+                    {"error": {"code": 503, "message": "busy", "status": "UNAVAILABLE"}},
+                ),
+                SimpleNamespace(text="తగిన తెలుగు స్క్రిప్ట్"),
+            ]
+        )
+        generator.client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content)
+        )
+        generator.model = "gemini-3.8-flash"
+        sleep = AsyncMock()
+        monkeypatch.setattr(asyncio, "sleep", sleep)
+
+        script = await generator._generate_with_gemini(sample_product)
+
+        assert script == "తగిన తెలుగు స్క్రిప్ట్"
+        assert generate_content.call_count == 2
+        sleep.assert_awaited_once_with(2)
+
+    @pytest.mark.asyncio
+    async def test_generate_retries_temporary_gemini_error(self, sample_product, monkeypatch):
+        generator = ScriptGenerator.__new__(ScriptGenerator)
+        generate_content = MagicMock(
+            side_effect=[
+                APIError(
+                    503,
+                    {"error": {"code": 503, "message": "busy", "status": "UNAVAILABLE"}},
+                ),
+                SimpleNamespace(text="తగిన తెలుగు స్క్రిప్ట్"),
+            ]
+        )
+        generator.client = SimpleNamespace(
+            models=SimpleNamespace(generate_content=generate_content)
+        )
+        generator.model = "gemini-3.8-flash"
+        sleep = AsyncMock()
+        monkeypatch.setattr(asyncio, "sleep", sleep)
+
+        script = await generator._generate_with_gemini(sample_product)
+
+        assert script == "తగిన తెలుగు స్క్రిప్ట్"
+        assert generate_content.call_count == 2
+        sleep.assert_awaited_once_with(2)
 
     def test_build_prompt_includes_all_product_details(self, sample_product):
         """Test prompt building includes all product details."""
@@ -126,41 +187,41 @@ class TestTTSEngine:
     """Test TTS engine."""
 
     def test_default_voice(self):
-        """Test default voice is Telugu female."""
+        """Test default voice is Gemini's female voice."""
         engine = TTSEngine()
-        assert engine.voice == "te-IN-ShrutiNeural"
+        assert engine.voice == "Kore"
 
     def test_custom_voice(self):
-        """Test custom voice selection."""
+        """Map the existing male voice setting to Gemini's male voice."""
         engine = TTSEngine(voice="te-IN-MohanNeural")
-        assert engine.voice == "te-IN-MohanNeural"
+        assert engine.voice == "Puck"
 
     def test_list_voices(self):
         """Test listing available voices."""
         voices = TTSEngine.list_voices()
         assert "female" in voices
         assert "male" in voices
-        assert voices["female"] == "te-IN-ShrutiNeural"
-        assert voices["male"] == "te-IN-MohanNeural"
+        assert voices["female"] == "Kore"
+        assert voices["male"] == "Puck"
 
     @pytest.mark.asyncio
-    async def test_synthesize_creates_file(self, sample_product, tmp_path):
+    async def test_synthesize_creates_file(self, tmp_path):
         """Test TTS synthesis creates audio file."""
-        # This test requires edge-tts to be installed
-        # We'll mock it to avoid network calls
-        engine = TTSEngine()
+        audio_bytes = b"RIFF test wav data"
+        client = MagicMock()
+        client.interactions.create.return_value = SimpleNamespace(
+            output_audio=SimpleNamespace(
+                data=base64.b64encode(audio_bytes).decode("ascii")
+            )
+        )
+        output_path = tmp_path / "test_output.wav"
 
-        output_path = tmp_path / "test_output.mp3"
+        with patch("src.script_tts.genai.Client", return_value=client) as create_client:
+            await TTSEngine().synthesize("టెస్ట్ స్క్రిప్ట్", str(output_path))
 
-        with patch('edge_tts.Communicate') as mock_communicate:
-            mock_instance = AsyncMock()
-            mock_instance.save = AsyncMock()
-            mock_communicate.return_value = mock_instance
-
-            await engine.synthesize("టెస్ట్ స్క్రిప్ట్", str(output_path))
-
-            mock_communicate.assert_called_once()
-            mock_instance.save.assert_called_once_with(str(output_path))
+        create_client.assert_called_once()
+        assert output_path.read_bytes() == audio_bytes
+        assert client.interactions.create.call_args.kwargs["model"] == "gemini-3.8-flash-lite-tts"
 
 
 class TestScriptResult:
@@ -189,7 +250,7 @@ class TestIntegration:
         """Test full script generation and TTS flow."""
         with patch('src.script_tts.ScriptGenerator._generate_with_gemini') as mock_gemini, \
              patch('src.script_tts.ScriptGenerator._translate_to_english') as mock_translate, \
-             patch('edge_tts.Communicate') as mock_communicate:
+             patch('src.script_tts.genai.Client') as mock_client_factory:
 
             # Mock Gemini response
             mock_gemini.return_value = "అదృష్టంగా కుర్తీ ₹299 లో YouTube description లో లింక్ ఉంది / Instagram మీద Comment LINK అంచుకోవడానికి DM చేయండి"
@@ -197,10 +258,14 @@ class TestIntegration:
             # Mock translation
             mock_translate.return_value = "Lucky kurti at ₹299. Link in YouTube description / Comment LINK on Instagram for DM."
 
-            # Mock TTS
-            mock_instance = AsyncMock()
-            mock_instance.save = AsyncMock()
-            mock_communicate.return_value = mock_instance
+            # Mock Gemini audio output
+            mock_client = MagicMock()
+            mock_client.interactions.create.return_value = SimpleNamespace(
+                output_audio=SimpleNamespace(
+                    data=base64.b64encode(b"RIFF test wav data").decode("ascii")
+                )
+            )
+            mock_client_factory.return_value = mock_client
 
             from src.script_tts import generate_script_and_tts
 
@@ -209,7 +274,7 @@ class TestIntegration:
             assert isinstance(result, ScriptResult)
             assert result.word_count >= 65  # Should meet minimum
             assert result.word_count <= 80  # Should not exceed maximum
-            assert result.audio_path.endswith("_voice.mp3")
+            assert result.audio_path.endswith("_voice.wav")
             assert "YouTube description లో లింక్ ఉంది" in result.telugu_script
             assert "Instagram మీద Comment LINK" in result.telugu_script
 

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     gemini_api_key: str = Field(default="", description="Google Gemini API key from AI Studio")
     gemini_model: str = Field(default="gemini-3.8-flash", description="Gemini model to use")
+    gemini_tts_model: str = Field(
+        default="gemini-3.8-flash-lite-tts",
+        description="Gemini text-to-speech model to use",
+    )
 
     # -------------------------------------------------------------------------
     # Google OAuth / YouTube
@@ -132,11 +136,9 @@ class Settings(BaseSettings):
     script_max_tokens: int = Field(default=500, ge=100, le=2000)
 
     # -------------------------------------------------------------------------
-    # TTS Configuration (Edge TTS)
+    # TTS Configuration (Gemini)
     # -------------------------------------------------------------------------
-    tts_voice: str = Field(default="te-IN-ShrutiNeural", description="Edge TTS voice")
-    tts_rate: str = Field(default="+0%", description="Speech rate")
-    tts_volume: str = Field(default="+0%", description="Speech volume")
+    tts_voice: str = Field(default="Kore", description="Gemini TTS voice")
 
     # -------------------------------------------------------------------------
     # Video Builder

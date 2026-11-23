@@ -587,19 +587,17 @@ def test_fonts():
 @app.command()
 def test_tts(
     text: str = typer.Argument("అదృష్టంగా కších నుండి తయారుైన మలుపు కుర్తీ", help="Telugu text to synthesize"),
-    voice: str = typer.Option("te-IN-ShrutiNeural", "--voice", help="Edge TTS voice"),
-    output: str = typer.Option("test_tts.mp3", "--output", "-o", help="Output file")
+    voice: str = typer.Option("Kore", "--voice", help="Gemini TTS voice"),
+    output: str = typer.Option("test_tts.wav", "--output", "-o", help="Output file")
 ):
-    """Test Edge TTS synthesis."""
+    """Test Gemini TTS synthesis."""
     print_banner()
 
     async def _test():
-        import edge_tts
+        from src.script_tts import TTSEngine
 
         console.print(f"[cyan]Synthesizing with {voice}...[/cyan]")
-
-        communicate = edge_tts.Communicate(text=text, voice=voice)
-        await communicate.save(output)
+        await TTSEngine(voice=voice).synthesize(text, output)
 
         console.print(f"[green]✓[/green] Audio saved: {output}")
 

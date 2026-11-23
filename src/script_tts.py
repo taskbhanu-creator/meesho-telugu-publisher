@@ -1,16 +1,12 @@
-"""
-Script generation using Google Gemini API and TTS using Edge TTS.
-Generates Telugu scripts for fashion videos with dual CTA.
-"""
+"""Generate Telugu scripts and audio using Google's Gemini API."""
+import base64
 import asyncio
 import os
 import re
 from dataclasses import dataclass
-from typing import Optional
 
-import edge_tts
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 
 from src.config import settings
 from src.database import Product
@@ -56,8 +52,13 @@ class ScriptGenerator:
     "అదృష్టంగా సтелర్ చేతులలో కాటిన ಹా క esfuer్టీ్స్టర్ విలసి 광역 DelhiBombay HyderabadChennai BangaloreKolkataPuneAhmedabadJaipurLucknowKanpurNagpurIndoreThaneBhopalVisakhapatnamPimpri-ChinchwadPatnaVadodaraGhaziabadLudhianaAgraNashikFaridabadMeerutRajkotKalyan-DombivliVasai-VirarVaranasiSrinagarAurangabadDhanbadAmritsarNavi MumbaiAllahabadRanchiHowrahCoimbatoreJabalpurGwaliorVijayawadaJodhpurMaduraiRaipurKotaGuwahatiChandigarhSolapurHubli-DharwadBareillyMoradabadMysoreTiruppurGurgaonAligarhJalandharBhubaneswarSalemWarangalGunturBhiwandiSaharanpurGorakhpurBikanerAmravatiNoidaJamshedpurBhilaiCuttackFirozabadKochiNelloreBhavnagarDehradunDurgapurAsansolRourkelaNandedKolhapurAjmerAkolaGulbargaJamnagarUjjainLoniSiliguriJhansiUlhasnagarJammuSangli-Miraj & KupwadMangaloreErodeBelgaumAmbatturTirunelveliMalegaonGayaJalgaonUdaipurMaheshtala"""
 
     def __init__(self):
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.client = None
         self.model = settings.gemini_model
+
+    def _get_client(self):
+        if self.client is None:
+            self.client = genai.Client(api_key=settings.gemini_api_key)
+        return self.client
 
     def _build_prompt(self, product: Product) -> str:
         """Build the prompt for Gemini."""
@@ -89,6 +90,8 @@ Requirements:
 
         # Check if CTA is present in script (case insensitive)
         cta_present = "YouTube description" in script and "Instagram మీద Comment LINK" in script and "DM చేయండి" in script
+        if cta_present:
+            script = script.replace(cta_pattern, " ")
 
         # Remove English words (keep Telugu, numbers, punctuation, ₹)
         script = re.sub(r'[a-zA-Z]+', '', script)
@@ -178,9 +181,15 @@ Requirements:
         }.get(product.color, product.color)
 
         return (
-            f"అదృష్టంగా {fabric_telugu} నుండి తయారుైన మలుపు {category_telugu} "
-            f"ఇప్పుడు ₹{product.price} లో {product.discount_percent}% తగ్గింపు "
-            f"రంగు {color_telugu} కోడ్ {product.product_code} "
+            f"ఈ రోజు మీ కోసం {fabric_telugu}తో చేసిన అందమైన {category_telugu}. "
+            f"{color_telugu} రంగు, చక్కని పనితనం ఈ దుస్తుకు ప్రత్యేక ఆకర్షణ ఇస్తాయి. "
+            f"తేలికైన వస్త్రం రోజువారీ వాడకానికి, వేడుకలకు అనుకూలంగా ఉంటుంది. "
+            f"సౌకర్యవంతమైన రూపంతో హాయిగా ధరించవచ్చు. ఇతర దుస్తులతో సులభంగా "
+            f"జత చేసుకుని కొత్తగా కనిపించండి. ఇప్పుడు ₹{product.price} మాత్రమే, "
+            f"అసలు ధర ₹{product.original_price}. {product.discount_percent}% "
+            f"తగ్గింపుతో ఈ ఎంపికను ఇప్పుడే చూడండి. రేటింగ్ {product.rating} "
+            f"నక్షత్రాలు, {product.review_count} మంది కొనుగోలుదారుల అభిప్రాయాలు. "
+            f"ఉత్పత్తి కోడ్ {product.product_code}. ధర, లభ్యత కొనుగోలు ముందు పరిశీలించండి. "
             f"YouTube description లో లింక్ ఉంది / Instagram మీద Comment LINK అంచుకోవడానికి DM చేయండి"
         )
     async def generate_script(self, product: Product) -> ScriptResult:
@@ -223,19 +232,30 @@ Requirements:
     async def _generate_with_gemini(self, product: Product) -> str:
         """Generate script using Gemini API."""
         try:
-            response = await asyncio.to_thread(
-                self.client.models.generate_content,
-                model=self.model,
-                contents=[
-                    types.Content(role="user", parts=[types.Part(text=self._build_prompt(product))])
-                ],
-                config=types.GenerateContentConfig(
-                    system_instruction=self.SYSTEM_PROMPT,
-                    temperature=settings.script_temperature,
-                    max_output_tokens=settings.script_max_tokens,
-                )
-            )
-            return response.text.strip()
+            for attempt in range(3):
+                try:
+                    response = await asyncio.to_thread(
+                        self._get_client().models.generate_content,
+                        model=self.model,
+                        contents=[
+                            types.Content(role="user", parts=[types.Part(text=self._build_prompt(product))])
+                        ],
+                        config=types.GenerateContentConfig(
+                            system_instruction=self.SYSTEM_PROMPT,
+                            temperature=settings.script_temperature,
+                            max_output_tokens=settings.script_max_tokens,
+                        )
+                    )
+                    return response.text.strip()
+                except errors.APIError as error:
+                    if error.code not in {429, 500, 502, 503, 504} or attempt == 2:
+                        raise
+                    delay = 2 ** (attempt + 1)
+                    logger.warning(
+                        f"Gemini temporarily unavailable (HTTP {error.code}); "
+                        f"retrying in {delay}s"
+                    )
+                    await asyncio.sleep(delay)
         except Exception as e:
             logger.error(f"Gemini generation failed: {e}")
             return self._fallback_script(product)
@@ -244,7 +264,7 @@ Requirements:
         """Translate Telugu script to English for reference."""
         try:
             response = await asyncio.to_thread(
-                self.client.models.generate_content,
+                self._get_client().models.generate_content,
                 model=self.model,
                 contents=[
                     types.Content(role="user", parts=[types.Part(text=f"Translate to English (brief): {telugu_script}")])
@@ -260,40 +280,71 @@ Requirements:
 
 
 # =============================================================================
-# TTS Engine (Edge TTS)
+# TTS Engine (Gemini)
 # =============================================================================
 
 class TTSEngine:
-    """Text-to-Speech using Microsoft Edge TTS (free, no API key)."""
+    """Text-to-Speech using Gemini's Telugu-capable audio generation model."""
 
     VOICES = {
-        "female": "te-IN-ShrutiNeural",
-        "male": "te-IN-MohanNeural"
+        "female": "Kore",
+        "male": "Puck",
+    }
+    LEGACY_VOICES = {
+        "te-IN-ShrutiNeural": "Kore",
+        "te-IN-MohanNeural": "Puck",
     }
 
-    def __init__(
-        self,
-        voice: str = "te-IN-ShrutiNeural",
-        rate: str = "+0%",
-        volume: str = "+0%"
-    ):
-        self.voice = voice
-        self.rate = rate
-        self.volume = volume
+    def __init__(self, voice: str = "Kore"):
+        self.voice = self.LEGACY_VOICES.get(voice, voice)
+        self.client = None
 
     async def synthesize(self, text: str, output_path: str) -> str:
         """Synthesize Telugu text to speech."""
-        # Ensure output directory exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        if self.client is None:
+            self.client = genai.Client(
+                api_key=settings.gemini_api_key,
+                http_options={"api_version": "v1beta"},
+            )
 
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=self.voice,
-            rate=self.rate,
-            volume=self.volume
-        )
+        for attempt in range(3):
+            try:
+                interaction = await asyncio.to_thread(
+                    self.client.interactions.create,
+                    model=settings.gemini_tts_model,
+                    input=[{
+                        "type": "user_input",
+                        "content": [{
+                            "type": "text",
+                            "text": text,
+                            "annotations": [{
+                                "type": "speech_metadata",
+                                "style": "Warm, clear, conversational Telugu narration.",
+                            }],
+                        }],
+                    }],
+                    response_format={"type": "audio"},
+                    generation_config={"speech_config": [{"voice": self.voice}]},
+                )
+                audio_data = interaction.output_audio.data if interaction.output_audio else None
+                if not audio_data:
+                    raise RuntimeError("Gemini TTS returned no audio data.")
+                audio_bytes = base64.b64decode(audio_data, validate=True)
+                break
+            except errors.APIError as error:
+                if error.code not in {429, 500, 502, 503, 504} or attempt == 2:
+                    raise
+                delay = 2 ** (attempt + 1)
+                logger.warning(
+                    f"Gemini TTS temporarily unavailable (HTTP {error.code}); "
+                    f"retrying in {delay}s"
+                )
+                await asyncio.sleep(delay)
 
-        await communicate.save(output_path)
+        output = os.path.abspath(output_path)
+        os.makedirs(os.path.dirname(output), exist_ok=True)
+        with open(output, "wb") as audio_file:
+            audio_file.write(audio_bytes)
         logger.info(f"TTS saved to {output_path}")
         return output_path
 
@@ -306,7 +357,7 @@ class TTSEngine:
         Synthesize and return word-level timestamps for subtitle sync.
         Returns (audio_path, word_timestamps)
         """
-        # For now, just synthesize. Word timestamps would need edge-tts streaming.
+        # Word timestamps would require streaming support from the TTS API.
         # We'll estimate timestamps based on word count and duration.
         await self.synthesize(text, output_path)
 
@@ -331,17 +382,13 @@ async def generate_script_and_tts(
 ) -> ScriptResult:
     """Generate script and TTS audio for a product."""
     script_gen = ScriptGenerator()
-    tts_engine = TTSEngine(
-        voice=settings.tts_voice,
-        rate=settings.tts_rate,
-        volume=settings.tts_volume
-    )
+    tts_engine = TTSEngine(voice=settings.tts_voice)
 
     # Generate script
     script_result = await script_gen.generate_script(product)
 
     # Generate audio
-    audio_filename = f"{product.meesho_product_id}_voice.mp3"
+    audio_filename = f"{product.meesho_product_id}_voice.wav"
     audio_path = os.path.join(output_dir, audio_filename)
 
     await tts_engine.synthesize(script_result.telugu_script, audio_path)
