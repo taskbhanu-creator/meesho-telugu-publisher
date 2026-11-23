@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 from playwright.async_api import (
     async_playwright,
@@ -21,7 +21,7 @@ from playwright.async_api import (
     TimeoutError as PlaywrightTimeoutError,
 )
 from src.config import settings
-from src.database import Product, save_product, get_product_count
+from src.database import Product, save_product
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -64,23 +64,23 @@ class MeeshoExtractor:
 
     # Category URL mappings
     CATEGORY_URLS = {
-        "kurtis": "/women-kurtis/pl/2z3",
-        "sarees": "/women-sarees/pl/2z4",
-        "ethnic-sets": "/women-ethnic-sets/pl/2z5",
-        "western-wear": "/women-western-wear/pl/2z6",
-        "handbags": "/women-handbags/pl/2z7",
+        "kurtis": "/women-kurtis/pl/3j0",
+        "sarees": "/sarees/pl/3iy",
+        "ethnic-sets": "/women-ethnic-wear/pl/1hjl",
+        "western-wear": "/western-wear-women/pl/4aus",
+        "handbags": "/women-handbags/pl/1oof",
     }
 
     # Selectors (may need updates if Meesho changes DOM)
     SELECTORS = {
-        "product_card": "[data-testid='product-card'], .ProductCard, .product-card",
-        "product_title": "[data-testid='product-title'], .ProductCard__title, .product-title",
+        "product_card": "a[href*='/p/']",
+        "product_title": "img[alt], h3, h2",
         "product_price": "[data-testid='product-price'], .ProductCard__price, .product-price",
         "product_original_price": "[data-testid='original-price'], .ProductCard__original-price, .original-price",
         "product_discount": "[data-testid='discount'], .ProductCard__discount, .discount",
         "product_rating": "[data-testid='rating'], .ProductCard__rating, .rating",
-        "product_image": "[data-testid='product-image'], .ProductCard__image img, .product-image img",
-        "product_link": "[data-testid='product-link'], .ProductCard__link, .product-card a",
+        "product_image": "img",
+        "product_link": "a[href*='/p/']",
         "next_page": "[data-testid='next-page'], .pagination-next, a[aria-label='Next']",
         "out_of_stock": "[data-testid='out-of-stock'], .out-of-stock, .sold-out",
     }
@@ -150,9 +150,18 @@ class MeeshoExtractor:
         try:
             response = await self.page.goto(
                 full_url,
-                wait_until="networkidle",
+                wait_until="domcontentloaded",
                 timeout=settings.meesho_request_timeout_ms
             )
+            if response and response.status in {404, 410}:
+                discovered_url = await self._discover_category_url(category)
+                if discovered_url:
+                    full_url = discovered_url
+                    response = await self.page.goto(
+                        full_url,
+                        wait_until="domcontentloaded",
+                        timeout=settings.meesho_request_timeout_ms
+                    )
             if response and response.status >= 400:
                 raise RuntimeError(f"Meesho returned HTTP {response.status} for {full_url}")
             await self._wait_for_products()
@@ -160,7 +169,7 @@ class MeeshoExtractor:
             while len(products) < max_products:
                 logger.info(f"Scraping page {page_num} for {category}")
 
-                page_products = await self._extract_products_from_page(category)
+                page_products = await self._extract_products_from_page(category, max_products)
                 products.extend(page_products)
 
                 if len(products) >= max_products:
@@ -192,11 +201,36 @@ class MeeshoExtractor:
         self.products_extracted += len(products)
         return products
 
-    async def scrape_all_categories(self) -> Dict[str, List[Product]]:
+    async def _discover_category_url(self, category: str) -> Optional[str]:
+        """Resolve a category from Meesho's live navigation when a stored URL is stale."""
+        link_labels = {
+            "kurtis": {"all kurtis"},
+            "sarees": {"all sarees"},
+            "ethnic-sets": {"women ethnic wear", "kurta pant sets"},
+            "western-wear": {"all topwear"},
+            "handbags": {"handbags"},
+        }
+        try:
+            await self.page.goto(
+                settings.meesho_base_url,
+                wait_until="domcontentloaded",
+                timeout=settings.meesho_request_timeout_ms,
+            )
+            links = await self.page.locator("a[href*='/pl/']").evaluate_all(
+                "(anchors) => anchors.map(a => ({href: a.getAttribute('href'), label: a.innerText.trim().toLowerCase()}))"
+            )
+            for link in links:
+                if link["label"] in link_labels.get(category, set()) and link["href"]:
+                    return urljoin(settings.meesho_base_url, link["href"])
+        except Exception as error:
+            logger.warning(f"Could not discover current URL for category {category}: {error}")
+        return None
+
+    async def scrape_all_categories(self, max_products: Optional[int] = None) -> Dict[str, List[Product]]:
         """Scrape all configured categories."""
         results = {}
         for category in settings.meesho_categories:
-            results[category] = await self.scrape_category(category)
+            results[category] = await self.scrape_category(category, max_products=max_products)
         if not any(results.values()):
             details = "; ".join(self.errors) or "No valid products matched the current page selectors."
             raise ProductExtractionError(
@@ -222,7 +256,7 @@ class MeeshoExtractor:
                     "blocked or the product-card selectors may be outdated."
                 )
 
-    async def _extract_products_from_page(self, category: str) -> List[Product]:
+    async def _extract_products_from_page(self, category: str, max_products: Optional[int] = None) -> List[Product]:
         """Extract product data from current page."""
         products = []
 
@@ -231,7 +265,7 @@ class MeeshoExtractor:
             logger.debug(f"Found {len(cards)} product cards")
 
             for card in cards:
-                if len(products) >= settings.meesho_max_products_per_category:
+                if len(products) >= (max_products or settings.meesho_max_products_per_category):
                     break
 
                 try:
@@ -252,10 +286,9 @@ class MeeshoExtractor:
         try:
             # Get product link and ID
             link_el = await card.query_selector(self.SELECTORS["product_link"])
-            if not link_el:
-                return None
-
-            href = await link_el.get_attribute("href")
+            href = await card.get_attribute("href")
+            if not href and link_el:
+                href = await link_el.get_attribute("href")
             if not href:
                 return None
 
@@ -263,16 +296,38 @@ class MeeshoExtractor:
             product_id = self._extract_product_id(product_url)
 
             # Get title
-            title_el = await card.query_selector(self.SELECTORS["product_title"])
-            title = (await title_el.inner_text()).strip() if title_el else "Unknown"
+            title_el = await card.query_selector("img[alt]")
+            title = (await title_el.get_attribute("alt") or "").strip() if title_el else ""
+            card_text = await card.inner_text()
+            if not title:
+                title = next(
+                    (
+                        line.strip()
+                        for line in card_text.splitlines()
+                        if line.strip()
+                        and not re.match(r"^\+\s*\d+\s+More$", line.strip(), re.IGNORECASE)
+                        and not re.search(r"₹|Reviews?$|^\d+(?:\.\d+)?$", line.strip(), re.IGNORECASE)
+                    ),
+                    "",
+                )
+            if not title:
+                return None
 
             # Skip if innerwear
             if self._is_innerwear_text(title):
                 return None
 
             # Get prices
-            price = await self._extract_price(card, self.SELECTORS["product_price"])
-            original_price = await self._extract_price(card, self.SELECTORS["product_original_price"])
+            card_prices = [
+                int(value.replace(",", ""))
+                for value in re.findall(r"₹\s*([\d,]+)", card_text)
+            ]
+            price = card_prices[0] if card_prices else await self._extract_price(card, self.SELECTORS["product_price"])
+            original_price = (
+                card_prices[1]
+                if len(card_prices) > 1
+                else await self._extract_price(card, self.SELECTORS["product_original_price"])
+            )
 
             if original_price <= 0:
                 original_price = price
@@ -282,31 +337,35 @@ class MeeshoExtractor:
                 discount = int(((original_price - price) / original_price) * 100)
 
             # Get discount from badge if available
+            discount_text = ""
             discount_el = await card.query_selector(self.SELECTORS["product_discount"])
             if discount_el:
                 discount_text = await discount_el.inner_text()
-                discount_match = re.search(r'(\d+)%', discount_text)
-                if discount_match:
-                    discount = int(discount_match.group(1))
-                    if original_price > 0:
-                        price = int(original_price * (100 - discount) / 100)
+            if not discount_text:
+                discount_match = re.search(r"(\d+)\s*%\s*off", card_text, re.IGNORECASE)
+                discount_text = discount_match.group(0) if discount_match else ""
+            discount_match = re.search(r"(\d+)\s*%", discount_text)
+            if discount_match:
+                discount = int(discount_match.group(1))
 
             # Get rating
-            rating = 4.0
+            rating = 0.0
             review_count = 0
-            rating_el = await card.query_selector(self.SELECTORS["product_rating"])
-            if rating_el:
-                rating_text = await rating_el.inner_text()
-                rating_match = re.search(r'(\d+\.?\d*)', rating_text)
-                if rating_match:
-                    rating = float(rating_match.group(1))
+            rating_match = re.search(r"(?:^|\n)\s*([0-5]\.\d)\s*(?:\n|$)", card_text)
+            if rating_match:
+                rating = float(rating_match.group(1))
+            review_match = re.search(r"([\d,]+)\s+Reviews?", card_text, re.IGNORECASE)
+            if review_match:
+                review_count = int(review_match.group(1).replace(",", ""))
+            if not price or not product_id:
+                return None
 
             # Get images
             image_urls = []
             img_els = await card.query_selector_all(self.SELECTORS["product_image"])
             for img in img_els[:3]:  # Max 3 images
                 src = await img.get_attribute("src") or await img.get_attribute("data-src")
-                if src and src.startswith("http"):
+                if src and src.startswith("http") and src not in image_urls:
                     image_urls.append(src)
 
             # Get product code (from URL or generate)
@@ -324,7 +383,13 @@ class MeeshoExtractor:
                 in_stock = False
 
             # Create affiliate URL
-            affiliate_url = settings.get_affiliate_url(product_id)
+            product_parts = urlsplit(product_url)
+            if settings.meesho_affiliate_id:
+                query = dict(parse_qsl(product_parts.query))
+                query["aff_id"] = settings.meesho_affiliate_id
+                affiliate_url = urlunsplit(product_parts._replace(query=urlencode(query)))
+            else:
+                affiliate_url = product_url
 
             return Product(
                 meesho_product_id=product_id,
@@ -387,8 +452,8 @@ class MeeshoExtractor:
     def _extract_fabric(self, title: str) -> str:
         """Extract fabric from title."""
         fabrics = [
-            "cotton", "silk", "chiffon", "georgette", "crepe", "linen",
-            "rayon", "viscose", "polyester", "blend", "khaddar", "handloom",
+            "handloom", "cotton", "silk", "chiffon", "georgette", "crepe",
+            "linen", "rayon", "viscose", "polyester", "blend", "khaddar",
             "organza", "satin", "velvet", "net", "lace", "embroidered"
         ]
         title_lower = title.lower()
@@ -399,11 +464,22 @@ class MeeshoExtractor:
 
     def _extract_color(self, title: str) -> str:
         """Extract color from title."""
+        title_lower = title.lower()
+        compound_colors = {
+            "navy blue": "Navy",
+            "olive green": "Olive",
+            "navy": "Navy",
+            "olive": "Olive",
+        }
+        for color, label in compound_colors.items():
+            if f" {color} " in f" {title_lower} " or title_lower.endswith(f" {color}") or title_lower.startswith(f"{color} "):
+                return label
+
         colors = [
             "red", "blue", "green", "yellow", "pink", "black", "white",
-            "orange", "purple", "brown", "grey", "gray", "maroon", "navy",
-            "teal", "olive", "beige", "cream", "gold", "silver", "peach",
-            "magenta", "turquoise", "indigo", "violet", "coral", "mustard"
+            "orange", "purple", "brown", "grey", "gray", "maroon", "teal",
+            "beige", "cream", "gold", "silver", "peach", "magenta",
+            "turquoise", "indigo", "violet", "coral", "mustard"
         ]
         title_lower = title.lower()
         for color in colors:
@@ -492,13 +568,13 @@ class MeeshoExtractor:
 # Convenience Functions
 # =============================================================================
 
-async def extract_products(headless: bool = True) -> Dict[str, List[Product]]:
+async def extract_products(headless: bool = True, max_products: Optional[int] = None) -> Dict[str, List[Product]]:
     """Convenience function to extract products from all categories."""
     async with MeeshoExtractor(headless=headless) as extractor:
-        return await extractor.scrape_all_categories()
+        return await extractor.scrape_all_categories(max_products=max_products)
 
 
-async def extract_category(category: str, headless: bool = True) -> List[Product]:
+async def extract_category(category: str, headless: bool = True, max_products: Optional[int] = None) -> List[Product]:
     """Convenience function to extract products from single category."""
     async with MeeshoExtractor(headless=headless) as extractor:
-        return await extractor.scrape_category(category)
+        return await extractor.scrape_category(category, max_products=max_products)

@@ -4,7 +4,7 @@
 
 ## 🚀 Features
 
-- **Meesho Scraper**: Playwright-based extraction of trending ladies' fashion (Kurtis, Sarees, Ethnic Sets, Western Wear, Handbags)
+- **Meesho Scraper**: Playwright-based extraction of live product titles, prices, ratings, reviews, images, and links across Kurtis, Sarees, Ethnic Wear, Western Wear, and Handbags. It rediscovers category URLs from Meesho navigation when saved URLs become stale.
 - **Strict Innerwear Exclusion**: Automatically filters out innerwear/lingerie/nightwear using comprehensive keyword list
 - **Telugu Script Generation**: Google Gemini API Free Tier generates 25-28s scripts with hook, fabric/price details, dual CTA
 - **Telugu TTS**: Edge TTS (`te-IN-ShrutiNeural`/`te-IN-MohanNeural`) - completely free, no API key

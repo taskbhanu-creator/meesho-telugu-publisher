@@ -185,6 +185,61 @@ class TestMeeshoExtractor:
         assert asyncio.run(extractor.scrape_category("kurtis")) == []
         assert "Meesho returned HTTP 403" in extractor.errors[0]
 
+    def test_discovers_category_url_from_live_navigation(self, extractor):
+        locator = MagicMock()
+        locator.evaluate_all = AsyncMock(
+            return_value=[
+                {"href": "/women-kurtis/pl/3j0", "label": "all kurtis"},
+            ]
+        )
+        extractor.page = MagicMock()
+        extractor.page.goto = AsyncMock()
+        extractor.page.locator = MagicMock(return_value=locator)
+
+        url = asyncio.run(extractor._discover_category_url("kurtis"))
+
+        assert url == "https://www.meesho.com/women-kurtis/pl/3j0"
+
+    def test_extracts_current_meesho_product_card(self, extractor):
+        image = MagicMock()
+        image.get_attribute = AsyncMock(side_effect=lambda name: {
+            "src": "https://images.meesho.com/images/products/333377247/ryeix_512.avif?width=360",
+            "data-src": None,
+        }.get(name))
+        title_image = MagicMock()
+        title_image.get_attribute = AsyncMock(return_value="Women Georgette Trendy Drishya Kurtis")
+        card = MagicMock()
+        card.get_attribute = AsyncMock(return_value="/apaari-fab-womens-embroidered-georgette-straight-kurti/p/5ihfj3")
+        card.query_selector = AsyncMock(side_effect=lambda selector: {
+            "img[alt]": title_image,
+            MeeshoExtractor.SELECTORS["product_discount"]: None,
+            MeeshoExtractor.SELECTORS["out_of_stock"]: None,
+        }.get(selector))
+        card.query_selector_all = AsyncMock(return_value=[image])
+        card.inner_text = AsyncMock(
+            return_value=(
+                "+10 More\n\nWomen Georgette Trendy Drishya Kurtis\n\n"
+                "₹311\n₹346\n10% off\n4.1\n53644 Reviews"
+            )
+        )
+
+        product = asyncio.run(extractor._extract_product_from_card(card, "kurtis"))
+
+        assert product is not None
+        assert product.meesho_product_id == "5ihfj3"
+        assert product.title == "Women Georgette Trendy Drishya Kurtis"
+        assert product.price == 311
+        assert product.original_price == 346
+        assert product.discount_percent == 10
+        assert product.rating == 4.1
+        assert product.review_count == 53644
+        assert product.image_urls == [
+            "https://images.meesho.com/images/products/333377247/ryeix_512.avif?width=360"
+        ]
+        assert product.affiliate_url == (
+            "https://www.meesho.com/apaari-fab-womens-embroidered-georgette-straight-kurti/p/5ihfj3"
+        )
+
 
 class TestCategoryURLs:
     """Test category URL mappings."""

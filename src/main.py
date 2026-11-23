@@ -152,7 +152,7 @@ def extract(
             console.print(f"[cyan]Extracting category: {category}[/cyan]")
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
                 task = progress.add_task("Scraping...", total=None)
-                products = await extract_category(category, headless=headless)
+                products = await extract_category(category, headless=headless, max_products=max_products)
                 progress.update(task, completed=True)
             console.print(f"[green]✓[/green] Extracted {len(products)} products from {category}")
         else:
@@ -160,7 +160,7 @@ def extract(
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
                 task = progress.add_task("Scraping all categories...", total=None)
                 try:
-                    results = await extract_products(headless=headless)
+                    results = await extract_products(headless=headless, max_products=max_products)
                 except ProductExtractionError as error:
                     progress.update(task, completed=True)
                     console.print(f"[red]Product extraction failed:[/red] {error}")
