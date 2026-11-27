@@ -319,6 +319,11 @@ class TestPipelineScheduler:
 class TestPipelineRunIntegration:
     """Integration tests for pipeline runs (mocked)."""
 
+    @pytest.fixture
+    def scheduler(self):
+        """Create a scheduler instance for pipeline integration tests."""
+        return PipelineScheduler(dry_run=True)
+
     @pytest.mark.asyncio
     async def test_run_pipeline_no_products(self, scheduler, sample_product):
         """Test pipeline run when no products available."""
